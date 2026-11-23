@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SafeOffer</title>
+<style>
+  :root{
+    --bg:#f6f3ec; --card:#fffdf8; --ink:#17302f; --muted:#5d6f6c; --line:#e2dccd;
+    --brand:#0b4f4a; --brand-ink:#fff;
+    --high:#b3261e; --high-bg:#fdecea; --med:#a15c00; --med-bg:#fff3dc; --low:#1b6b3a; --low-bg:#e5f4ea;
+    --unk:#6b7a78; --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1b1a; --card:#16282699; --ink:#e8efed; --muted:#9db0ac; --line:#2a3f3c;
+      --brand:#5fd0c4; --brand-ink:#06201d; --high:#ff8a80; --high-bg:#3a1714; --med:#ffc266; --med-bg:#3a2a0c;
+      --low:#7be0a0; --low-bg:#12301e; }
+    input,textarea,select{background:#0f1b1a!important}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Telugu","Noto Sans Devanagari",sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:16px 16px 80px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 12px}
+  .logo{font:700 24px Georgia,"Times New Roman",serif;letter-spacing:-.3px}
+  .logo span{color:var(--brand)}
+  .tag{color:var(--muted);font-size:14px;margin:0 0 14px}
+  select,input,textarea,button{font:inherit;color:inherit}
+  select,input,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  textarea{min-height:130px;resize:vertical}
+  label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:12px 0 4px}
+  #lang{width:auto;padding:6px 10px}
+  nav{display:flex;gap:6px;background:var(--line);padding:4px;border-radius:12px;margin-bottom:14px}
+  nav button{flex:1;border:0;background:transparent;padding:10px 6px;border-radius:9px;font-weight:600;font-size:14px;cursor:pointer;color:var(--muted)}
+  nav button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0002}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:560px){.row{grid-template-columns:1fr}}
+  .btn{background:var(--brand);color:var(--brand-ink);border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.danger{background:var(--high);color:#fff}
+  .btn:disabled{opacity:.55;cursor:wait}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  .chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+  details summary{cursor:pointer;font-weight:600;color:var(--brand);margin-top:12px}
+  .hidden{display:none}
+  /* result */
+  .verdict{border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid}
+  .verdict.high{background:var(--high-bg);border-color:var(--high);color:var(--high)}
+  .verdict.medium{background:var(--med-bg);border-color:var(--med);color:var(--med)}
+  .verdict.low{background:var(--low-bg);border-color:var(--low);color:var(--low)}
+  .verdict .lvl{font:700 13px system-ui;text-transform:uppercase;letter-spacing:.08em}
+  .verdict .score{font:700 40px Georgia,serif;line-height:1.1}
+  .verdict p{margin:6px 0 0;color:var(--ink);font-weight:600}
+  .meter{height:8px;background:#0001;border-radius:99px;overflow:hidden;margin-top:10px}
+  .meter i{display:block;height:100%;background:currentColor}
+  h3{margin:18px 0 8px;font-size:15px}
+  ul.plain{list-style:none;padding:0;margin:0}
+  ul.plain li{padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--card)}
+  .sev{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;border-radius:6px;padding:1px 7px;margin-right:6px;color:#fff}
+  .sev.high{background:var(--high)} .sev.medium{background:var(--med)} .sev.low{background:var(--unk)}
+  .ev{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+  .dot.ok{background:var(--low)} .dot.warn{background:var(--med)} .dot.bad{background:var(--high)} .dot.unknown{background:var(--unk)}
+  .small{font-size:13px;color:var(--muted)}
+  a{color:var(--brand)}
+  .ai{border-left:4px solid var(--brand);padding:8px 12px;background:var(--card);border-radius:0 10px 10px 0}
+  .q{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+  .q .yn{display:flex;gap:6px;flex:none}
+  .q .yn button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:600}
+  .q .yn button.on-yes{background:var(--high);color:#fff;border-color:var(--high)}
+  .q .yn button.on-no{background:var(--low);color:#fff;border-color:var(--low)}
+  .pill{display:inline-block;padding:4px 12px;border-radius:99px;font-weight:700;font-size:13px}
+  .pill.travelling,.pill.arrived{background:var(--low-bg);color:var(--low)}
+  .pill.overdue{background:var(--med-bg);color:var(--med)}
+  .pill.sos{background:var(--high);color:#fff}
+  .pill.done{background:var(--line);color:var(--muted)}
+  .err{color:var(--high);font-weight:600;margin-top:8px}
+  .linkbox{display:flex;gap:8px}
+  .linkbox input{flex:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">Safe<span>Offer</span></div>
+    <select id="lang" aria-label="Language">
+      <option value="en">English</option><option value="hi">हिन्दी</option><option value="te">తెలుగు</option>
+    </select>
+  </header>
+  <p class="tag">Check a job or internship offer <b>before</b> you pay, share documents, or travel.</p>
+
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-tab="offer">1 · Check offer</button>
+    <button role="tab" aria-selected="false" data-tab="call">2 · After a call</button>
+    <button role="tab" aria-selected="false" data-tab="safety">3 · Interview safety</button>
+  </nav>
+
+  <!-- TAB 1 -->
+  <section id="tab-offer">
+    <div class="card">
+      <label for="text">Paste the WhatsApp message, email or offer letter</label>
+      <textarea id="text" placeholder="Paste the message here…"></textarea>
+      <div class="row">
+        <div>
+          <label for="file">…or upload the letter (PDF / photo)</label>
+          <input id="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt">
+        </div>
+        <div>
+          <label>Try a sample</label>
+          <div class="chips" style="margin:0">
+            <button class="chip" data-sample="fee">Fee scam</button>
+            <button class="chip" data-sample="abroad">Cambodia job</button>
+            <button class="chip" data-sample="real">Genuine-looking</button>
+          </div>
+        </div>
+      </div>
+      <div id="fileMsg" class="small"></div>
+
+      <details>
+        <summary>More details (makes the check more accurate)</summary>
+        <div class="row">
+          <div><label>Company name</label><input id="company" placeholder="e.g. Infosys Limited"></div>
+          <div><label>Recruiter email</label><input id="email" type="email" placeholder="hr@company.com"></div>
+          <div><label>Company website</label><input id="website" placeholder="company.com"></div>
+          <div><label>CIN (21 characters)</label><input id="cin" placeholder="U72900KA2015PTC080000"></div>
+          <div><label>GSTIN (15 characters)</label><input id="gstin" placeholder="27AAPFU0939F1ZV"></div>
+          <div><label>Did you apply to this company?</label>
+            <select id="applied"><option value="">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+        </div>
+        <label>Company's registered address (from MCA / offer letter)</label>
+        <input id="regaddr" placeholder="Plot 12, Hitech City Road, Madhapur, Hyderabad 500081">
+        <label>Interview location given by the recruiter</label>
+        <input id="intaddr" placeholder="Hotel Sunrise, Dwaraka Nagar, Visakhapatnam 530016">
+        <label>Was there a video or in-person interview before the offer?</label>
+        <select id="hadint"><option value="">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select>
+      </details>
+      <div style="margin-top:14px"><button class="btn" id="analyze">Check this offer</button></div>
+      <div id="offerErr" class="err"></div>
+    </div>
+    <div id="offerResult"></div>
+  </section>
+
+  <!-- TAB 2 -->
+  <section id="tab-call" class="hidden">
+    <div class="card">
+      <p class="small" style="margin-top:0">Nothing is recorded. Just answer from memory after the call.</p>
+      <div id="questions"></div>
+      <label for="notes">Anything else they said? (optional)</label>
+      <textarea id="notes" style="min-height:80px"></textarea>
+      <div style="margin-top:14px"><button class="btn" id="callBtn">Check this call</button></div>
+      <div id="callErr" class="err"></div>
+    </div>
+    <div id="callResult"></div>
+  </section>
+
+  <!-- TAB 3 -->
+  <section id="tab-safety" class="hidden">
+    <div class="card" id="safetyForm">
+      <p class="small" style="margin-top:0">Going for an interview? Share your live location with someone you trust. If you miss your check-in, they see it.</p>
+      <div class="row">
+        <div><label>Your name</label><input id="sName" placeholder="Riya"></div>
+        <div><label>Company</label><input id="sCompany" placeholder="Company name"></div>
+        <div><label>Trusted contact name</label><input id="sContact" placeholder="Mom"></div>
+        <div><label>Trusted contact phone</label><input id="sPhone" type="tel" placeholder="98xxxxxxxx"></div>
+        <div><label>I will arrive in (minutes)</label><input id="sArrive" type="number" min="1" value="45"></div>
+        <div><label>Interview will take (minutes)</label><input id="sInt" type="number" min="10" value="90"></div>
+      </div>
+      <label>Interview address</label>
+      <input id="sAddr" placeholder="Where is the interview?">
+      <div style="margin-top:14px"><button class="btn" id="sStart">Start sharing</button></div>
+      <div id="sErr" class="err"></div>
+    </div>
+
+    <div class="card hidden" id="safetyLive">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="pill" id="sPill">…</span><span class="small" id="sTimer"></span>
+      </div>
+      <label>Send this link to your trusted contact</label>
+      <div class="linkbox"><input id="sLink" readonly><button class="btn ghost" id="sCopy">Copy</button></div>
+      <p class="small" id="sGeo"></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn" id="sArrived">I've arrived</button>
+        <button class="btn ghost" id="sCheck">I'm OK (check-in)</button>
+        <button class="btn ghost" id="sStop">I'm safe - stop sharing</button>
+        <button class="btn danger" id="sSos">SOS</button>
+      </div>
+      <p class="small">Demo build: the contact sees a live tracking page. Push/SMS delivery to the contact is a stub (see README).</p>
+      <button class="chip" id="sFake">Send a test location (demo)</button>
+    </div>
+  </section>
+
+  <p class="small" id="disc" style="margin-top:24px">SafeOffer gives a risk estimate, not a verdict. Always confirm on the official portals before paying, sharing documents or travelling.</p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const SAMPLES = {
+  fee: {text:"Congratulations! You are selected as an intern at TCS (work from home). Pay Rs 2000 as registration fee via UPI/PhonePe within 2 hours, otherwise your offer will expire. Contact HR on WhatsApp only. Do not tell anyone else.",
+        email:"tcs.hr.jobs@gmail.com", company:"TCS"},
+  abroad: {text:"Urgent hiring! Data entry and customer support operators for our office in Cambodia. Salary Rs 80,000 per month. Free flight ticket and accommodation. You can come on tourist visa, we will convert it to work visa. Reply on Telegram today.",
+           company:"Global Tech Solutions"},
+  real: {text:"Dear Anil, we are pleased to offer you the position of Software Engineer Trainee at Infosys. This follows your video interview on 12 Nov. Joining date: 5 January. Annual CTC Rs 3.6 LPA. Please report to Infosys Campus, Electronics City, Bengaluru 560100 with your original certificates.",
+         email:"careers@infosys.com", company:"Infosys Limited", applied:"yes", hadint:"yes"}
+};
+let lang = 'en', answers = {}, questions = [];
+
+function h(tag, attrs, ...kids){
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs||{})){
+    if (k==='class') e.className=v; else if (k.startsWith('on')) e.addEventListener(k.slice(2),v); else e.setAttribute(k,v);
+  }
+  kids.flat().forEach(c => e.append(c?.nodeType ? c : document.createTextNode(c ?? '')));
+  return e;
+}
+async function api(path, data, method){
+  const r = await fetch(path, data!==undefined ? {method:method||'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)} : {});
+  const j = await r.json().catch(()=>({error:'Server error'}));
+  if(!r.ok) throw new Error(j.error||'Request failed');
+  return j;
+}
+
+/* ---------- tabs & language ---------- */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x===b));
+  ['offer','call','safety'].forEach(t => $('#tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
+});
+$('#lang').onchange = async e => { lang = e.target.value; await loadQuestions(); };
+
+/* ---------- result renderer ---------- */
+function renderResult(el, r){
+  el.replaceChildren();
+  const v = h('div',{class:'verdict '+r.risk.level},
+    h('div',{class:'lvl'}, r.risk.level.toUpperCase()+' RISK'),
+    h('div',{class:'score'}, r.risk.score+'/100'),
+    h('div',{class:'meter'}, h('i',{style:`width:${r.risk.score}%`})),
+    h('p',{}, r.headline));
+  el.append(v);
+  if (r.ai_explanation) el.append(h('div',{class:'ai'}, r.ai_explanation));
+  if (r.flags.length){
+    el.append(h('h3',{},'Warning signs found'));
+    el.append(h('ul',{class:'plain'}, r.flags.map(f => h('li',{},
+      h('span',{class:'sev '+f.severity}, f.severity), f.title,
+      f.evidence ? h('span',{class:'ev'}, 'Found: “'+f.evidence+'”') : ''))));
+  } else el.append(h('p',{class:'small'},'No warning signs found in what you provided.'));
+  if (r.checks.length){
+    el.append(h('h3',{},'Verification checks'));
+    el.append(h('ul',{class:'plain'}, r.checks.map(c => h('li',{},
+      h('span',{class:'dot '+c.status}), h('b',{}, c.label+': '), c.detail))));
+  }
+  el.append(h('h3',{},'What to do now'));
+  el.append(h('ul',{class:'plain'}, r.next_steps.map(s => h('li',{}, s))));
+  if (r.links.length){
+    el.append(h('h3',{},'Confirm on official sites'));
+    el.append(h('ul',{class:'plain'}, r.links.map(l => h('li',{}, h('a',{href:l.url,target:'_blank',rel:'noopener'}, l.label)))));
+  }
+  el.append(h('p',{class:'small'}, r.disclaimer));
+  el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---------- tab 1 ---------- */
+document.querySelectorAll('[data-sample]').forEach(b => b.onclick = () => {
+  const s = SAMPLES[b.dataset.sample];
+  $('#text').value = s.text; $('#email').value = s.email||''; $('#company').value = s.company||'';
+  $('#applied').value = s.applied||''; $('#hadint').value = s.hadint||'';
+  ['website','cin','gstin','regaddr','intaddr'].forEach(i => $('#'+i).value='');
+});
+$('#file').onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  $('#fileMsg').textContent = 'Reading file…';
+  try{
+    const r = await fetch('/api/extract',{method:'POST',headers:{'X-Filename':f.name},body:f});
+    const j = await r.json(); if(!r.ok) throw new Error(j.error);
+    $('#text').value = j.text; $('#fileMsg').textContent = `Text extracted (${j.method}). Check it looks right, then press “Check this offer”.`;
+  }catch(err){ $('#fileMsg').textContent = ''; $('#offerErr').textContent = err.message; }
+};
+$('#analyze').onclick = async () => {
+  $('#offerErr').textContent=''; $('#analyze').disabled = true;
+  try{
+    const r = await api('/api/analyze',{lang, text:$('#text').value, company:$('#company').value,
+      recruiter_email:$('#email').value, website:$('#website').value, cin:$('#cin').value, gstin:$('#gstin').value,
+      registered_address:$('#regaddr').value, interview_address:$('#intaddr').value,
+      applied:$('#applied').value, had_interview:$('#hadint').value});
+    renderResult($('#offerResult'), r);
+  }catch(e){ $('#offerErr').textContent = e.message; }
+  $('#analyze').disabled = false;
+};
+
+/* ---------- tab 2 ---------- */
+async function loadQuestions(){
+  questions = (await api('/api/questions?lang='+lang)).questions;
+  const box = $('#questions'); box.replaceChildren();
+  questions.forEach(q => {
+    const yes = h('button',{type:'button'}, lang==='hi'?'हाँ':lang==='te'?'అవును':'Yes');
+    const no  = h('button',{type:'button'}, lang==='hi'?'नहीं':lang==='te'?'కాదు':'No');
+    const paint = () => { yes.className = answers[q.id]===true?'on-yes':''; no.className = answers[q.id]===false?'on-no':''; };
+    yes.onclick = () => { answers[q.id]=true; paint(); }; no.onclick = () => { answers[q.id]=false; paint(); }; paint();
+    box.append(h('div',{class:'q'}, h('div',{}, q.text), h('div',{class:'yn'}, yes, no)));
+  });
+}
+$('#callBtn').onclick = async () => {
+  $('#callErr').textContent=''; $('#callBtn').disabled = true;
+  try{ renderResult($('#callResult'), await api('/api/callcheck',{lang, answers, notes:$('#notes').value})); }
+  catch(e){ $('#callErr').textContent = e.message; }
+  $('#callBtn').disabled = false;
+};
+
+/* ---------- tab 3 ---------- */
+let sid = null, watchId = null, lastSent = 0, poll = null;
+async function sCall(action, data){ return api(`/api/safety/${sid}/${action}`, data||{}); }
+function paintSafety(s){
+  const label = {travelling:'Sharing location', arrived:'At interview', overdue:'Check-in overdue', sos:'SOS sent', done:'Stopped'};
+  const p = $('#sPill'); p.className = 'pill '+s.status; p.textContent = label[s.status]||s.status;
+  const m = Math.floor(Math.abs(s.due_in_sec)/60);
+  $('#sTimer').textContent = ['done','sos'].includes(s.status) ? '' : (s.due_in_sec>=0 ? `Next check-in in ${m} min` : `Overdue by ${m} min`);
+}
+function sendLoc(lat,lng){ if(!sid) return; sCall('location',{lat,lng}).then(paintSafety).catch(()=>{}); lastSent = Date.now(); }
+$('#sStart').onclick = async () => {
+  $('#sErr').textContent='';
+  try{
+    const r = await api('/api/safety/start',{name:$('#sName').value, company:$('#sCompany').value,
+      contact_name:$('#sContact').value, contact_phone:$('#sPhone').value,
+      arrive_in_min:+$('#sArrive').value, interview_min:+$('#sInt').value, interview_address:$('#sAddr').value});
+    sid = r.id; $('#sLink').value = location.origin + r.tracker_path;
+    $('#safetyForm').classList.add('hidden'); $('#safetyLive').classList.remove('hidden'); paintSafety(r.state);
+    if (navigator.geolocation){
+      $('#sGeo').textContent = 'Allow location access when your browser asks.';
+      watchId = navigator.geolocation.watchPosition(p => { $('#sGeo').textContent = 'Location is being shared.';
+          if (Date.now()-lastSent > 8000) sendLoc(p.coords.latitude, p.coords.longitude); },
+        e => { $('#sGeo').textContent = 'Location unavailable ('+e.message+'). Use the demo button below.'; },
+        {enableHighAccuracy:true, maximumAge:5000});
+    } else $('#sGeo').textContent = 'This device has no location support. Use the demo button below.';
+    poll = setInterval(() => api('/api/safety/'+sid).then(paintSafety).catch(()=>{}), 5000);
+  }catch(e){ $('#sErr').textContent = e.message; }
+};
+$('#sCopy').onclick = async () => {
+  const link = $('#sLink').value;
+  if (navigator.share) { try{ await navigator.share({title:'Track my interview trip', url:link}); return; }catch(e){} }
+  try{ await navigator.clipboard.writeText(link); $('#sCopy').textContent='Copied'; }catch(e){ $('#sLink').select(); }
+};
+$('#sArrived').onclick = () => sCall('arrived').then(paintSafety);
+$('#sCheck').onclick = () => sCall('safe',{stop:false}).then(paintSafety);
+$('#sStop').onclick = () => { sCall('safe',{stop:true}).then(s => { paintSafety(s); if(watchId!==null) navigator.geolocation.clearWatch(watchId); }); };
+$('#sSos').onclick = () => { if (confirm('Send an SOS to your trusted contact?')) sCall('sos').then(paintSafety); };
+$('#sFake').onclick = () => sendLoc(17.0005 + (Math.random()-.5)*0.002, 81.8040 + (Math.random()-.5)*0.002);
+
+fetch('/api/health').then(r=>r.json()).catch(()=>{});
+loadQuestions();
+</script>
+</body>
+</html>

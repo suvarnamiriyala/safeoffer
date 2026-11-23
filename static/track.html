@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SafeOffer · Live tracking</title>
+<style>
+  :root{--bg:#f6f3ec;--card:#fffdf8;--ink:#17302f;--muted:#5d6f6c;--line:#e2dccd;--ok:#1b6b3a;--okbg:#e5f4ea;--warn:#a15c00;--warnbg:#fff3dc;--bad:#b3261e;--badbg:#fdecea}
+  @media (prefers-color-scheme: dark){:root{--bg:#0f1b1a;--card:#162826;--ink:#e8efed;--muted:#9db0ac;--line:#2a3f3c;--ok:#7be0a0;--okbg:#12301e;--warn:#ffc266;--warnbg:#3a2a0c;--bad:#ff8a80;--badbg:#3a1714}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:640px;margin:0 auto;padding:16px}
+  .logo{font:700 20px Georgia,serif;margin-bottom:12px}
+  .banner{border-radius:14px;padding:16px;border:1px solid;margin-bottom:14px}
+  .banner h1{margin:0;font-size:20px}.banner p{margin:4px 0 0}
+  .banner.travelling,.banner.arrived{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+  .banner.overdue{background:var(--warnbg);border-color:var(--warn);color:var(--warn)}
+  .banner.sos{background:var(--bad);border-color:var(--bad);color:#fff}
+  .banner.done{background:var(--card);border-color:var(--line);color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+  iframe{width:100%;height:300px;border:0;border-radius:10px;background:var(--line)}
+  .small{color:var(--muted);font-size:13px}
+  ul{list-style:none;margin:0;padding:0}li{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+  a{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">SafeOffer · Live tracking</div>
+  <div id="banner" class="banner done"><h1>Loading…</h1></div>
+  <div class="card" id="mapCard" style="display:none">
+    <iframe id="map" title="Map"></iframe>
+    <p class="small" id="mapMeta"></p>
+  </div>
+  <div class="card" id="info"></div>
+  <div class="card"><b>Activity</b><ul id="events"></ul></div>
+  <p class="small">If you cannot reach them and they are overdue or sent an SOS, call them first, then local emergency services (112 in India).</p>
+</div>
+<script>
+const sid = location.pathname.split('/').pop();
+let lastKey = '';
+const $ = s => document.querySelector(s);
+function ago(ts){ const s = Math.max(0, Math.floor(Date.now()/1000 - ts)); return s<60 ? s+'s ago' : Math.floor(s/60)+' min ago'; }
+async function tick(){
+  let s;
+  try{ const r = await fetch('/api/safety/'+sid); if(!r.ok) throw 0; s = await r.json(); }
+  catch(e){ $('#banner').className='banner done'; $('#banner').innerHTML='<h1>Tracking link not found</h1><p>It may have expired.</p>'; return; }
+  const msg = {
+    travelling:[`${s.name} is on the way`, 'Sharing live location.'],
+    arrived:[`${s.name} has arrived`, 'Interview in progress. A check-in is due.'],
+    overdue:[`${s.name} missed a check-in`, 'Try calling them now.'],
+    sos:[`SOS from ${s.name}`, 'Call them immediately. Last known location is below.'],
+    done:[`${s.name} is safe`, 'Location sharing has stopped.']}[s.status];
+  const b = $('#banner'); b.className = 'banner '+s.status; b.replaceChildren();
+  const h1 = document.createElement('h1'); h1.textContent = msg[0]; const p = document.createElement('p'); p.textContent = msg[1];
+  b.append(h1,p);
+  if (s.location && s.status!=='done'){
+    $('#mapCard').style.display='block';
+    const {lat,lng,ts} = s.location, d = 0.004;
+    const key = lat.toFixed(5)+','+lng.toFixed(5);
+    if (key!==lastKey){ lastKey=key;
+      $('#map').src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`; }
+    const m = $('#mapMeta'); m.replaceChildren();
+    const a = document.createElement('a'); a.href=`https://www.google.com/maps?q=${lat},${lng}`; a.target='_blank'; a.rel='noopener'; a.textContent='Open in Google Maps';
+    m.append(`Updated ${ago(ts)} · `, a);
+  } else if (!s.location){ $('#mapCard').style.display='none'; }
+  const info = $('#info'); info.replaceChildren();
+  [['Company', s.company], ['Interview address', s.address], ['Trusted contact', s.contact_name]].forEach(([k,v]) => {
+    if(!v) return; const d = document.createElement('div'); const bb = document.createElement('b'); bb.textContent = k+': ';
+    d.append(bb, v); info.append(d); });
+  if(!info.children.length) info.style.display='none';
+  const ev = $('#events'); ev.replaceChildren();
+  s.events.slice().reverse().forEach(e => { const li = document.createElement('li'); li.textContent = `${ago(e.ts)} - ${e.msg}`; ev.append(li); });
+}
+tick(); setInterval(tick, 4000);
+</script>
+</body>
+</html>
