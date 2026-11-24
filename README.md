@@ -51,3 +51,6 @@ The score is a risk estimate, not a verdict. A low score means no tricks were fo
 - `app.py` routes · `analyzer.py` combines checks · `rules.py` scam rules · `verify.py` CIN/GSTIN/address
 - `callcheck.py` questionnaire · `extract.py` PDF/OCR · `explain.py` Gemini · `safety.py` sharing/SOS · `i18n.py` translations
 - `static/index.html` app · `static/track.html` contact's tracking page · `samples/` test offer files
+
+- ##output
+- https://github.com/user-attachments/assets/fcdff551-5324-4fb2-a489-382e2836b78f
